@@ -46,9 +46,8 @@ def predict(
         clean_inputs = preprocessor.transform(df_inputs)
         result = model.predict(clean_inputs)
         
-        return {"predicted_yield": round(float(result), 2)}
+        
+return {"predicted_yield": round(float(result[0]), 2)}
     except Exception as e:
         return {"error": str(e)}
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+
