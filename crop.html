@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AgroInference | Crop Yield Prediction</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        /* ================= HEADER ================= */
+
+        header {
+            background: #0f172a;
+            color: white;
+            padding: 18px 6%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #10b981;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: #10b981;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 23px;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            margin-bottom: 3px;
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        nav {
+            display: flex;
+            gap: 25px;
+        }
+
+        nav a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        nav a:hover {
+            color: #10b981;
+        }
+
+        /* ================= MAIN ================= */
+
+        .container {
+            width: 90%;
+            max-width: 1150px;
+            margin: 35px auto;
+        }
+
+        .hero {
+            margin-bottom: 28px;
+        }
+
+        .hero h2 {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+
+        .hero h2 span {
+            color: #10b981;
+        }
+
+        .hero p {
+            color: #64748b;
+            font-size: 15px;
+        }
+
+        /* ================= CARDS ================= */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 26px;
+            box-shadow: 0 5px 20px rgba(15, 23, 42, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #ecfdf5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .card-header h3 {
+            font-size: 18px;
+        }
+
+        .card-header p {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        /* ================= FORM ================= */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            height: 45px;
+            padding: 0 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            font-size: 14px;
+            color: #0f172a;
+            background: white;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+        }
+
+        .input-help {
+            color: #94a3b8;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        /* ================= BUTTON ================= */
+
+        .predict-btn {
+            width: 100%;
+            margin-top: 25px;
+            height: 50px;
+            border: none;
+            border-radius: 10px;
+            background: #10b981;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .predict-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        /* ================= RESULT ================= */
+
+        .result-card {
+            background: linear-gradient(145deg, #064e3b, #065f46);
+            color: white;
+            border: none;
+        }
+
+        .result-card .card-header p {
+            color: #a7f3d0;
+        }
+
+        .result-icon {
+            background: rgba(255,255,255,0.12);
+        }
+
+        .result-label {
+            color: #a7f3d0;
+            font-size: 13px;
+            margin-top: 25px;
+        }
+
+        .result-value {
+            font-size: 36px;
+            font-weight: 800;
+            margin: 7px 0;
+        }
+
+        .result-unit {
+            color: #d1fae5;
+            font-size: 13px;
+        }
+
+        .status {
+            margin-top: 25px;
+            padding: 11px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.10);
+            font-size: 12px;
+        }
+
+        /* Loading ke doran result number ko halka sa pulse karne ke liye */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+
+        .result-value.is-loading {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        /* ================= MODEL INFO ================= */
+
+        .model-card {
+            margin-top: 22px;
+        }
+
+        .model-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 13px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+
+        .model-row:last-child {
+            border-bottom: none;
+        }
+
+        .model-row span:first-child {
+            color: #64748b;
+        }
+
+        .active {
+            color: #059669;
+            font-weight: 700;
+        }
+
+        /* ================= INFO ================= */
+
+        .info-section {
+            margin-top: 22px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .info-box {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-box .icon {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .info-box h4 {
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .info-box p {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        /* ================= FOOTER ================= */
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 35px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media (max-width: 850px) {
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-section {
+                grid-template-columns: 1fr;
+            }
+
+            nav {
+                display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 94%;
+                margin-top: 25px;
+            }
+
+            header {
+                padding: 15px 4%;
+            }
+
+            .hero h2 {
+                font-size: 24px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .result-value {
+                font-size: 30px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+
+<header>
+
+    <div class="logo">
+
+        <div class="logo-icon">🌱</div>
+
+        <div>
+            <h1>AgroInference</h1>
+            <p>AI-Powered Crop Yield Prediction</p>
+        </div>
+
+    </div>
+
+    <nav>
+        <a href="#">Dashboard</a>
+        <a href="#prediction">Prediction</a>
+        <a href="#model">Model Info</a>
+    </nav>
+
+</header>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="container">
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <h2>
+            Crop Yield <span>Prediction</span>
+        </h2>
+
+        <p>
+            Enter agricultural and environmental information to estimate crop yield using the trained machine learning model.
+        </p>
+
+    </section>
+
+
+    <!-- ================= PREDICTION AREA ================= -->
+
+    <div class="grid" id="prediction">
+
+
+        <!-- INPUT CARD -->
+
+        <section class="card">
+
+            <div class="card-header">
+
+                <div class="card-icon">🌾</div>
+
+                <div>
+                    <h3>Prediction Inputs</h3>
+                    <p>Enter the required agricultural information</p>
+                </div>
+
+            </div>
+
+
+            <!-- IMPORTANT:
+                 Existing backend endpoint preserved
+            -->
+
+            <form id="predictionForm" action="/predict" method="POST">
+
+                <div class="form-grid">
+
+
+                    <!-- YEAR -->
+
+                    <div class="form-group">
+
+                        <label for="year">
+                            Year
+                        </label>
+
+                        <input
+                            type="number"
+                            id="year"
+                            name="year"
+                            placeholder="e.g. 2026"
+                            min="1990"
+                            max="2050"
+                            required
+                        >
+
+                        <span class="input-help">
+                            Prediction year
+                        </span>
+
+                    </div>
+
+
+                    <!-- AREA -->
+
+                    <div class="form-group">
+
+                        <label for="area">
+                            Country / Region
+                        </label>
+
+                        <select id="area" name="area" required>
+
+                            <option value="Pakistan">
+                                Pakistan
+                            </option>
+
+                            <option value="India">
+                                India
+                            </option>
+
+                            <option value="Albania">
+                                Albania
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- RAINFALL -->
+
+                    <div class="form-group">
+
+                        <label for="rainfall">
+                            Average Rainfall
+                        </label>
+
+                        <input
+                            type="number"
+                            id="rainfall"
+                            name="rainfall"
+                            placeholder="e.g. 1485.0"
+                            step="0.1"
+                            required
+                        >
+
+                        <span class="input-help">
+                            Millimeters per year
+                        </span>
+
+                    </div>
+
+
+                    <!-- CROP -->
+
+                    <div class="form-group">
+
+                        <label for="item">
+                            Crop Type
+                        </label>
+
+                        <select id="item" name="item" required>
+
+                            <option value="Maize">
+                                Maize
+                            </option>
+
+                            <option value="Potatoes">
+                                Potatoes
+                            </option>
+
+                            <option value="Rice, paddy">
+                                Rice, Paddy
+                            </option>
+
+                            <option value="Soybeans">
+                                Soybeans
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- TEMPERATURE -->
+
+                    <div class="form-group">
+
+                        <label for="temp">
+                            Average Temperature
+                        </label>
+
+                        <input
+                            type="number"
+                            id="temp"
+                            name="temp"
+                            placeholder="e.g. 16.37"
+                            step="0.01"
+                            required
+                        >
+
+                        <span class="input-help">
+                            Average environmental temperature °C
+                        </span>
+
+                    </div>
+
+
+                    <!-- PESTICIDES -->
+
+                    <div class="form-group">
+
+                        <label for="pesticides">
+                            Pesticides Used
+                        </label>
+
+                        <input
+                            type="number"
+                            id="pesticides"
+                            name="pesticides"
+                            placeholder="e.g. 121.00"
+                            step="0.01"
+                            required
+                        >
+
+                        <span class="input-help">
+                            Amount used in tonnes
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- BUTTON -->
+
+                <button type="submit" class="predict-btn">
+
+                    🌱 &nbsp; Predict Crop Yield
+
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- RESULT CARD -->
+
+        <section class="card result-card">
+
+            <div class="card-header">
+
+                <div class="card-icon result-icon">
+                    📊
+                </div>
+
+                <div>
+                    <h3>Prediction Result</h3>
+
+                    <p>
+                        Your model prediction will appear here
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="result-label">
+                PREDICTED CROP YIELD
+            </div>
+
+            <!-- Placeholder until backend result is connected -->
+
+            <div class="result-value" id="outputYield">
+                —
+            </div>
+
+            <div class="result-unit">
+                hg / ha
+            </div>
+
+
+            <div class="status" id="statusDesc">
+                ● Ready for prediction
+            </div>
+
+        </section>
+
+    </div>
+
+
+    <!-- ================= MODEL INFORMATION ================= -->
+
+    <section class="card model-card" id="model">
+
+        <div class="card-header">
+
+            <div class="card-icon">
+                🧠
+            </div>
+
+            <div>
+                <h3>Machine Learning Model</h3>
+                <p>Current prediction engine information</p>
+            </div>
+
+        </div>
+
+
+        <div class="model-row">
+
+            <span>Algorithm</span>
+
+            <strong>
+                Decision Tree Regressor
+            </strong>
+
+        </div>
+
+
+        <div class="model-row">
+
+            <span>Prediction Type</span>
+
+            <strong>
+                Regression
+            </strong>
+
+        </div>
+
+
+        <div class="model-row">
+
+            <span>Model Status</span>
+
+            <strong class="active">
+                ● Active
+            </strong>
+
+        </div>
+
+
+        <div class="model-row">
+
+            <span>Target</span>
+
+            <strong>
+                hg / ha yield
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= INFORMATION BOXES ================= -->
+
+    <section class="info-section">
+
+
+        <div class="info-box">
+
+            <div class="icon">🌧️</div>
+
+            <h4>Environmental Factors</h4>
+
+            <p>
+                Rainfall and temperature are included as agricultural prediction features.
+            </p>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <div class="icon">🌾</div>
+
+            <h4>Crop Information</h4>
+
+            <p>
+                Select the crop type and target region used by the prediction model.
+            </p>
+
+        </div>
+
+
+        <div class="info-box">
+
+            <div class="icon">📈</div>
+
+            <h4>Yield Estimation</h4>
+
+            <p>
+                The trained regression model estimates the expected crop yield.
+            </p>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ================= FOOTER ================= -->
+
+<footer>
+
+    AgroInference Suite © 2026
+    <br>
+    Crop Yield Prediction System
+
+</footer>
+<script>
+    // Step 1: Form ko uski id se dhoondo (seedha, guessing ki zaroorat nahi)
+    const formElement = document.getElementById('predictionForm');
+
+    // Step 2: Result dikhane wale elements bhi id se dhoondo
+    const outputYield = document.getElementById('outputYield');
+    const statusDesc = document.getElementById('statusDesc');
+
+    formElement.addEventListener('submit', async function (e) {
+
+        // Yeh line browser ko naye page/JSON par navigate hone se rokti hai
+        e.preventDefault();
+
+        // Jab tak jawab nahi aata, loading state dikhao
+        outputYield.innerText = "⏳";
+        outputYield.classList.add('is-loading');
+        statusDesc.innerText = "Running decision tree pipeline...";
+
+        // Step 3: Har field ko uski apni id se seedha uthao (koi guessing nahi)
+        const formData = new FormData(formElement);
+        // formElement mein har input/select ka "name" attribute already
+        // backend (year, area, rainfall, item, temp, pesticides) se match karta hai,
+        // isliye FormData(formElement) khud hi sahi data uthaa lega.
+
+        try {
+            // Step 4: Relative URL - yeh khud hi sahi jagah jayega,
+            // chahe local pe ho ya deploy hone ke baad
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+                // Note: Content-Type header manually mat lagayein -
+                // FormData khud sahi header set kar deta hai
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                // Backend ne error bheja (e.g. galat input)
+                outputYield.innerText = "❌";
+                outputYield.classList.remove('is-loading');
+                statusDesc.innerText = result.error;
+            } else {
+                // Step 5: Success - result ko isi page par dikha do
+                outputYield.innerText = Number(result.predicted_yield).toLocaleString();
+                outputYield.classList.remove('is-loading');
+                statusDesc.innerText = "Prediction complete successfully!";
+            }
+
+        } catch (error) {
+            // Yahan aayega agar backend server chal hi nahi raha, ya CORS block ho raha ho
+            outputYield.innerText = "❌";
+            outputYield.classList.remove('is-loading');
+            statusDesc.innerText = "Network Error: Check karein ke server chal raha hai.";
+            console.error(error);
+        }
+    });
+</script>
+
+
+</body>
+</html>
