@@ -17,10 +17,6 @@ app.add_middleware(
 model = pickle.load(open("dtr.pkl", "rb"))
 preprocessor = pickle.load(open("processor.pkl", "rb"))
 
-# Yeh route frontend (crop.html) ko serve karta hai jab koi
-# root URL ("/") kholega - isi tarah local aur deployed dono jagah
-# frontend + backend EK HI URL se milte hain, alag se koi
-# 127.0.0.1 ya extra setup ki zaroorat nahi rehti.
 @app.get("/")
 def read_index():
     return FileResponse("crop.html")
@@ -35,18 +31,15 @@ def predict(
     item: str = Form(...)
 ):
     try:
-        # Colab exact features columns structural list alignment
         columns_layout = ['Year', 'average_rain_fall_mm_per_year', 'pesticides_tonnes', 'avg_temp', 'Area', 'Item']
-        
-        # Wrapping array raw inputs inside a structured Dataframe layout metadata
         raw_inputs = [[year, rainfall, pesticides, temp, area, item]]
         df_inputs = pd.DataFrame(raw_inputs, columns=columns_layout)
-        
-        # Transform structural variables safely
         clean_inputs = preprocessor.transform(df_inputs)
-             result = model.predict(clean_inputs)
+        result = model.predict(clean_inputs)
         return {"predicted_yield": round(float(result[0]), 2)}
     except Exception as e:
-        return {"error": str(e)}   
-      
+        return {"error": str(e)}
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
