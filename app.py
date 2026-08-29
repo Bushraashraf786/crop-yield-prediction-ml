@@ -44,10 +44,9 @@ def predict(
         
         # Transform structural variables safely
         clean_inputs = preprocessor.transform(df_inputs)
-        result = model.predict(clean_inputs)
-        
-        
-return {"predicted_yield": round(float(result[0]), 2)}
+             result = model.predict(clean_inputs)
+        return {"predicted_yield": round(float(result[0]), 2)}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e)}   
+      
 
